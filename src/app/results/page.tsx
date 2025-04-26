@@ -321,3 +321,4 @@ function BookOpenIcon(props: any): JSX.Element {
     <BookOpen {...props} />
   );
 }
+

@@ -183,7 +183,7 @@ const AnalysisForm = () => {
             </SelectTrigger>
             <SelectContent className="bg-background">
               <SelectItem value="standard">Standard Mode</SelectItem>
-              <SelectItem value="analyzing">Analyzing Mode (ChatGPT Powered)</SelectItem>
+              <SelectItem value="analyzing">Analyzing Mode (Gemini AI Powered)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -217,4 +217,5 @@ export default function Home() {
     </div>
   );
 }
+
 

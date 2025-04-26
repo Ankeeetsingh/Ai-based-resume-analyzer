@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -19,20 +18,59 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LucideIcon, CheckCircle, AlertTriangle, Briefcase, GraduationCap, BookOpen, Mail } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { analyzeResume } from "@/ai/flows/analyze-resume";
 
-// Placeholder Icons (replace with actual resume icons later)
-const BriefcaseIcon: LucideIcon = Briefcase;
-const GraduationCapIcon: LucideIcon = GraduationCap;
-const BookOpenIcon: LucideIcon = BookOpen;
+interface AnalysisResult {
+  matchScore?: number;
+  resumeRank?: number;
+  topSkills?: string[];
+  highlights?: string;
+  weakPoints?: string;
+  education?: string;
+  interviewQuestions?: string[];
+  modelAnswers?: string[];
+  rejectionReason?: string;
+  salarySuggestion?: string;
+  name?: string; // Assuming name is part of your result
+}
 
-// Mock Data for Skills
-const mockSkills = ["JavaScript", "React", "Node.js", "Python", "HTML", "CSS"];
+interface ResultsProps {
+  searchParams: { [key: string]: string | string[] | undefined };
+}
 
 export default function ResultsPage() {
-  const searchParams = useSearchParams();
-  const jobTitle = searchParams.get('jobTitle') || "N/A";
-  const analysisResults = JSON.parse(searchParams.get('analysisResults') || "[]");
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([]);
+  const [jobTitle, setJobTitle] = useState<string>("N/A");
   const [selectedResumeIndex, setSelectedResumeIndex] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setAnalysisResults(data.analysisResults || []);
+        setJobTitle(data.jobTitle || "N/A");
+      } catch (error: any) {
+        console.error("Failed to fetch analysis results:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleResumeSelect = (index: number) => {
     setSelectedResumeIndex(index);
@@ -41,6 +79,10 @@ export default function ResultsPage() {
   const clearSelection = () => {
     setSelectedResumeIndex(null);
   };
+
+  if (isLoading) {
+    return <div className="text-center text-white">Loading...</div>;
+  }
 
   return (
     <div className="flex flex-col min-h-screen p-6 bg-gray-900 text-white">
@@ -158,7 +200,7 @@ export default function ResultsPage() {
                         <div>
                           <h4 className="mb-2 font-semibold flex items-center space-x-1"><BriefcaseIcon className="h-4 w-4 text-blue-500" /><span>Skills</span></h4>
                           <div className="flex flex-wrap gap-2">
-                            {(analysisResults[selectedResumeIndex].topSkills ?? mockSkills).map((skill, index) => (
+                            {(analysisResults[selectedResumeIndex].topSkills ?? []).map((skill, index) => (
                               <Badge key={index}>{skill}</Badge>
                             ))}
                           </div>

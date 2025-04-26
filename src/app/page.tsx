@@ -5,14 +5,12 @@ import { useRouter } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { parseResume, ResumeData } from "@/services/resume-parser";
 import { analyzeResume } from "@/ai/flows/analyze-resume";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import { Sparkles, Users, Bolt } from "lucide-react";
 import { Moon, Sun } from 'lucide-react';
 
@@ -40,7 +38,7 @@ const HeroSection = () => (
   </div>
 );
 
-const Badge = ({ icon: Icon, text }: { icon: LucideIcon, text: string }) => (
+const Badge = ({ icon: Icon, text }: { icon: any, text: string }) => (
   <div className="flex items-center bg-secondary text-secondary-foreground rounded-full px-4 py-2 text-sm">
     <Icon className="mr-2 h-4 w-4" />
     {text}
@@ -105,18 +103,11 @@ const AnalysisForm = () => {
 
     try {
       let analysisResults: any[] = [];
+      let resumeDataUris: string[] = [];
 
-      if (analysisMode === "standard") {
-        // Mock analysis with local parsing
-        const parsedResumes: ResumeData[] = [];
-        for (const resumeFile of resumes) {
-          const resumeData = await parseResume(resumeFile);
-          parsedResumes.push(resumeData);
-        }
-        analysisResults = parsedResumes;
-      } else {
+      if (analysisMode === "analyzing") {
         // Call the Genkit flow with all resumes
-        const resumeDataUris = await Promise.all(
+        resumeDataUris = await Promise.all(
           Array.from(resumes).map(async (file) => {
             return new Promise<string>((resolve, reject) => {
               const reader = new FileReader();
@@ -132,11 +123,31 @@ const AnalysisForm = () => {
             });
           })
         );
-        analysisResults = await analyzeResume({ jobDescription: jobDescription, expectedSalary: expectedSalary, resumes: resumeDataUris });
       }
 
+
       // Navigate to the results page with the analysis results
-      router.push(`/results?jobTitle=${jobTitle}&analysisResults=${JSON.stringify(analysisResults)}`);
+      // Use a POST request to send the data
+      const response = await fetch('/results', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jobTitle: jobTitle,
+          jobDescription: jobDescription,
+          expectedSalary: expectedSalary,
+          analysisMode: analysisMode,
+          resumeDataUris: resumeDataUris,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // await router.push(url);
+      router.push('/results');
 
       toast({
         title: "Success",
@@ -237,3 +248,4 @@ export default function Home() {
     </div>
   );
 }
+

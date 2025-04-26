@@ -50,6 +50,7 @@ const Badge = ({ icon: Icon, text }: { icon: LucideIcon, text: string }) => (
 const AnalysisForm = () => {
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
+  const [expectedSalary, setExpectedSalary] = useState("");
   const [resumes, setResumes] = useState<File[]>([]);
   const [analysisMode, setAnalysisMode] = useState<"standard" | "analyzing">("standard");
   const [isLoading, setIsLoading] = useState(false);
@@ -63,6 +64,11 @@ const AnalysisForm = () => {
   const handleJobDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setJobDescription(e.target.value);
   };
+
+  const handleExpectedSalaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setExpectedSalary(e.target.value);
+  };
+
 
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -126,7 +132,7 @@ const AnalysisForm = () => {
             });
           })
         );
-        analysisResults = await analyzeResume({ jobDescription: jobDescription, resumes: resumeDataUris });
+        analysisResults = await analyzeResume({ jobDescription: jobDescription, expectedSalary: expectedSalary, resumes: resumeDataUris });
       }
 
       // Navigate to the results page with the analysis results
@@ -171,21 +177,35 @@ const AnalysisForm = () => {
             onChange={handleJobDescriptionChange}
           />
         </div>
+         <div>
+          <Label htmlFor="expected-salary">Expected Salary</Label>
+          <Input
+            type="text"
+            id="expected-salary"
+            placeholder="Enter expected salary (e.g., ₹9 lakh per annum)"
+            value={expectedSalary}
+            onChange={handleExpectedSalaryChange}
+          />
+        </div>
         <div>
           <Label htmlFor="resume-upload">Upload Resumes</Label>
           <Input type="file" id="resume-upload" multiple onChange={handleResumeUpload} />
         </div>
-        <div>
-          <Label>Analysis Mode</Label>
-          <Select value={analysisMode} onValueChange={(value) => setAnalysisMode(value as "standard" | "analyzing")}>
-            <SelectTrigger className="bg-background">
-              <SelectValue placeholder="Select analysis mode" />
-            </SelectTrigger>
-            <SelectContent className="bg-background">
-              <SelectItem value="standard">Standard Mode</SelectItem>
-              <SelectItem value="analyzing">Analyzing Mode (Gemini AI Powered)</SelectItem>
-            </SelectContent>
-          </Select>
+         <div>
+          <Label className="flex items-center space-x-2">
+            <span>AI Mode</span>
+            <Switch
+              id="ai-mode"
+              checked={analysisMode === "analyzing"}
+              onCheckedChange={(checked) =>
+                setAnalysisMode(checked ? "analyzing" : "standard")
+              }
+            />
+          </Label>
+          <p className="text-sm text-muted-foreground">
+            Enable AI mode to use Gemini AI for resume analysis and get
+            salary suggestions and automatic rejection emails.
+          </p>
         </div>
         <Button onClick={analyzeResumes} disabled={isLoading}>
           {isLoading ? (
@@ -217,5 +237,3 @@ export default function Home() {
     </div>
   );
 }
-
-

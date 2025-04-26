@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { LucideIcon, CheckCircle, AlertTriangle, Briefcase, GraduationCap, BookOpen } from "lucide-react";
+import { LucideIcon, CheckCircle, AlertTriangle, Briefcase, GraduationCap, BookOpen, Mail } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // Placeholder Icons (replace with actual resume icons later)
@@ -114,6 +114,17 @@ export default function ResultsPage() {
                             <p className="text-sm text-muted-foreground">
                               Rank: {analysisResults[selectedResumeIndex].resumeRank ?? (selectedResumeIndex + 1)}, Match Score: {analysisResults[selectedResumeIndex].matchScore}%
                             </p>
+                            {analysisResults[selectedResumeIndex].rejectionReason && (
+                              <p className="text-sm text-red-500 flex items-center space-x-1">
+                                <Mail className="h-4 w-4" />
+                                <span>Rejected: {analysisResults[selectedResumeIndex].rejectionReason}</span>
+                              </p>
+                            )}
+                            {analysisResults[selectedResumeIndex].salarySuggestion && (
+                              <p className="text-sm text-green-500">
+                                Salary Suggestion: {analysisResults[selectedResumeIndex].salarySuggestion}
+                              </p>
+                            )}
                           </div>
                         </div>
 

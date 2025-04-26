@@ -9,9 +9,12 @@
 
 import {ai} from '@/ai/ai-instance';
 import {z} from 'genkit';
+import {sendRejectionEmail} from '@/services/email-service';
+import {estimateSalary} from '@/services/salary-estimator';
 
 const AnalyzeResumeInputSchema = z.object({
   jobDescription: z.string().describe('The job description to match against.'),
+  expectedSalary: z.string().describe('The expected salary for the job (e.g., "₹9 lakh per annum").'),
   resumes: z
     .array(
       z
@@ -33,6 +36,9 @@ const AnalyzeResumeOutputSchema = z.array(z.object({
   suggestions: z.string().describe('Suggestions to improve the resume.'),
   interviewQuestions: z.array(z.string()).describe('Tailored interview questions for the candidate.'),
   modelAnswers: z.array(z.string()).describe('Model answers for the interview questions.'),
+  salarySuggestion: z.string().optional().describe('Suggested salary for the candidate, based on their qualifications and experience.'),
+  rejectionReason: z.string().optional().describe('Reason for rejecting the resume, if applicable.'),
+  candidateEmail: z.string().optional().describe('The email of the candidate. Only present if resume is rejected.'),
 }));
 export type AnalyzeResumeOutput = z.infer<typeof AnalyzeResumeOutputSchema>;
 
@@ -64,9 +70,10 @@ const analyzeResumePrompt = ai.definePrompt({
       suggestions: z.string().describe('Suggestions to improve the resume.'),
       interviewQuestions: z.array(z.string()).describe('Tailored interview questions for the candidate.'),
       modelAnswers: z.array(z.string()).describe('Model answers for the interview questions.'),
+      candidateEmail: z.string().optional().describe('The email address of the candidate, extracted from the resume.'),
     }),
   },
-  prompt: `You are an AI resume analyzer. Analyze the resume provided and compare it to the job description.
+  prompt: `You are an AI resume analyzer. Analyze the resume provided and compare it to the job description. Extract the candidate's email address from the resume.
 
 Job Description: {{{jobDescription}}}
 
@@ -82,6 +89,7 @@ Provide the following:
 - Suggestions: Suggestions to improve the resume.
 - Interview Questions: Tailored interview questions for the candidate.
 - Model Answers: Model answers for the interview questions.
+-Candidate Email: Extract from the resume and add it to the ouput.
 `,
 });
 
@@ -101,11 +109,47 @@ async input => {
       jobDescription: input.jobDescription,
       resume: resume,
     });
-    results.push(output!)
+
+    if (output!.matchScore < 50) {
+      const rejectionReason = `Your resume does not meet the minimum requirements for this position.  Your match score was ${output!.matchScore}%. Reasons for rejection include: ${output!.weakPoints}`;
+      if (output!.candidateEmail) {
+          await sendRejectionEmail({
+            to: output!.candidateEmail,
+            subject: 'Resume Application Update',
+            body: rejectionReason,
+          });
+      }
+
+      results.push({
+        ...output!,
+        salarySuggestion: undefined,
+        rejectionReason,
+        candidateEmail: output!.candidateEmail,
+        topSkills: [],
+        highlights: '',
+        suggestions: '',
+        interviewQuestions: [],
+        modelAnswers: [],
+      });
+    } else {
+      const salarySuggestion = await estimateSalary({
+        jobDescription: input.jobDescription,
+        expectedSalary: input.expectedSalary,
+        resumeText: resume, // Pass the raw resume content for better estimation
+        topSkills: output!.topSkills.join(', '),
+        highlights: output!.highlights
+      });
+      results.push({
+        ...output!,
+        salarySuggestion,
+        rejectionReason: undefined,
+        candidateEmail: undefined,
+      });
+    }
   }
 
   // Simple ranking based on match score (can be improved with more sophisticated logic)
-  results.sort((a, b) => b.matchScore - a.matchScore);
+  results.sort((a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0));
   results.forEach((result, index) => {
     result.resumeRank = index + 1;
   });

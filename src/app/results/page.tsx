@@ -59,9 +59,15 @@ export default function ResultsPage() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const data = await response.json();
-        setAnalysisResults(data.analysisResults || []);
-        setJobTitle(data.jobTitle || "N/A");
+        try {
+          const data = await response.json();
+          setAnalysisResults(data.analysisResults || []);
+          setJobTitle(data.jobTitle || "N/A");
+        } catch (jsonError: any) {
+          console.error("Error parsing JSON:", jsonError);
+          throw new Error("Failed to parse JSON response: " + jsonError.message);
+        }
+
       } catch (error: any) {
         console.error("Failed to fetch analysis results:", error);
       } finally {
@@ -242,5 +248,22 @@ export default function ResultsPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+// Dummy components to ensure icons can be found
+function BriefcaseIcon(props: any): JSX.Element {
+  return (
+    <Briefcase {...props} />
+  );
+}
+function GraduationCapIcon(props: any): JSX.Element {
+  return (
+    <GraduationCap {...props} />
+  );
+}
+function BookOpenIcon(props: any): JSX.Element {
+  return (
+    <BookOpen {...props} />
   );
 }

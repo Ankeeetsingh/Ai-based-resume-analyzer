@@ -125,7 +125,25 @@ async input => {
 
   // Shortlist and send rejection emails
   for (const result of results) {
-    if (result.resumeRank! > input.numCandidatesToShortlist) {
+    if (result.matchScore! < 50) {
+          const rejectionReason = `Thank you for your interest in the position. After careful consideration, we regret to inform you that you have not been shortlisted. Reasons for rejection include: Your match score was below 50%.`;
+          if (result.candidateEmail) {
+            try {
+              await sendRejectionEmail({
+                to: result.candidateEmail,
+                subject: 'Resume Application Update',
+                body: rejectionReason,
+              });
+              console.log(`Rejection email sent to ${result.candidateEmail}`);
+            } catch (error) {
+              console.error(`Failed to send rejection email to ${result.candidateEmail}:`, error);
+            }
+          }
+          result.rejectionReason = rejectionReason;
+          result.salarySuggestion = undefined;
+          result.candidateEmail = undefined;
+        }
+    else if (result.resumeRank! > input.numCandidatesToShortlist) {
       const rejectionReason = `Thank you for your interest in the position. After careful consideration, we regret to inform you that you have not been shortlisted. Reasons for rejection include: ${result.weakPoints}. Your match score was ${result.matchScore}%.`;
       if (result.candidateEmail) {
         try {
@@ -148,7 +166,12 @@ async input => {
         topSkills: result.topSkills.join(', '),
         highlights: result.highlights
       });
-      result.salarySuggestion = salarySuggestion;
+      
+       // Convert annual expected salary to monthly range
+        const monthlySalaryRange = salarySuggestion.replace("Based on your qualifications, a suggested salary is in the range of ", "");
+        const monthlySalaryString = monthlySalaryRange;
+        
+        result.salarySuggestion = `₹${monthlySalaryString} with the help of AI`;
       result.rejectionReason = undefined;
       result.candidateEmail = undefined;
     }

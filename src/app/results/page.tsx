@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LucideIcon, CheckCircle, AlertTriangle, Briefcase, GraduationCap, BookOpen, Mail } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { analyzeResume } from "@/ai/flows/analyze-resume";
 
 interface AnalysisResult {
   matchScore?: number;
@@ -56,6 +55,7 @@ export default function ResultsPage() {
         });
 
         if (!response.ok) {
+          console.error("HTTP error! status:", response.status); // Log the status
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
@@ -267,3 +267,4 @@ function BookOpenIcon(props: any): JSX.Element {
     <BookOpen {...props} />
   );
 }
+

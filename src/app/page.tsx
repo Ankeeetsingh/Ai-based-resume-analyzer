@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { parseResume, ResumeData } from "@/services/resume-parser";
 import { analyzeResume } from "@/ai/flows/analyze-resume";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -31,16 +30,15 @@ const HeroSection = () => (
       Upload a job description and resumes to automatically rank candidates and generate tailored interview questions using advanced AI analysis.
     </p>
     <div className="flex justify-center mt-8 space-x-4">
-      <Badge icon={Sparkles} text="AI-Powered Analysis" />
+      <Badge icon={Sparkles} text="Gemini AI-Powered Analysis" />
       <Badge icon={Users} text="Candidate Ranking" />
       <Badge icon={Bolt} text="Custom Interview Questions" />
     </div>
   </div>
 );
 
-const Badge = ({ icon: Icon, text }: { icon: any, text: string }) => (
+const Badge = ({ icon: any, text }: { icon: any, text: string }) => (
   <div className="flex items-center bg-secondary text-secondary-foreground rounded-full px-4 py-2 text-sm">
-    <Icon className="mr-2 h-4 w-4" />
     {text}
   </div>
 );
@@ -125,28 +123,21 @@ const AnalysisForm = () => {
         );
       }
 
-
-      // Navigate to the results page with the analysis results
-      // Use a POST request to send the data
-      const response = await fetch('/results', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jobTitle: jobTitle,
+      if (analysisMode === "analyzing") {
+        analysisResults = await analyzeResume({
           jobDescription: jobDescription,
           expectedSalary: expectedSalary,
-          analysisMode: analysisMode,
-          resumeDataUris: resumeDataUris,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+          resumes: resumeDataUris,
+        });
+      } else {
+        analysisResults = []; // Handle standard mode if needed
       }
 
-      // await router.push(url);
+      // Store results in local storage
+      localStorage.setItem('jobTitle', jobTitle);
+      localStorage.setItem('analysisResults', JSON.stringify(analysisResults));
+
+      // Navigate to the results page with the analysis results
       router.push('/results');
 
       toast({

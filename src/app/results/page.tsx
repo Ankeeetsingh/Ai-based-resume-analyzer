@@ -47,29 +47,24 @@ export default function ResultsPage() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        // Retrieve data from local storage
+        const storedJobTitle = localStorage.getItem('jobTitle');
+        const storedAnalysisResults = localStorage.getItem('analysisResults');
 
-        if (!response.ok) {
-          console.error("HTTP error! status:", response.status); // Log the status
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (storedJobTitle && storedAnalysisResults) {
+          setJobTitle(storedJobTitle);
+          try {
+            setAnalysisResults(JSON.parse(storedAnalysisResults));
+          } catch (parseError: any) {
+            console.error("Failed to parse analysis results from local storage:", parseError);
+            // Provide a default value or handle the error gracefully
+            setAnalysisResults([]);
+          }
+        } else {
+          console.log('No data found in local storage.  Please go back to the main page to perform the analysis.');
         }
-
-        try {
-          const data = await response.json();
-          setAnalysisResults(data.analysisResults || []);
-          setJobTitle(data.jobTitle || "N/A");
-        } catch (jsonError: any) {
-          console.error("Error parsing JSON:", jsonError);
-          throw new Error("Failed to parse JSON response: " + jsonError.message);
-        }
-
       } catch (error: any) {
-        console.error("Failed to fetch analysis results:", error);
+        console.error("Failed to fetch analysis results from local storage:", error);
       } finally {
         setIsLoading(false);
       }
@@ -267,4 +262,5 @@ function BookOpenIcon(props: any): JSX.Element {
     <BookOpen {...props} />
   );
 }
+
 

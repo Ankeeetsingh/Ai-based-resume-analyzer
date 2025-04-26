@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { LucideIcon, CheckCircle, AlertTriangle, Briefcase, GraduationCap, BookOpen, Mail } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { sendRejectionEmail } from "@/services/email-service"; // Import sendRejectionEmail
+import { useToast } from "@/hooks/use-toast"; // Import useToast
 
 interface AnalysisResult {
   matchScore?: number;
@@ -44,6 +45,7 @@ export default function ResultsPage() {
   const [jobTitle, setJobTitle] = useState<string>("N/A");
   const [selectedResumeIndex, setSelectedResumeIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast(); // Initialize toast
 
   useEffect(() => {
     const fetchData = async () => {
@@ -90,20 +92,32 @@ export default function ResultsPage() {
   const sendRejectionEmailToCandidate = async (candidate: AnalysisResult) => {
     if (!candidate.candidateEmail || !candidate.name) {
       console.error("Candidate email or name is missing.");
+      toast({
+        title: "Error",
+        description: "Candidate email or name is missing.",
+      });
       return;
     }
 
-    const rejectionReason = `Thank you for your interest in the position. After careful consideration, we regret to inform you that you have not been shortlisted. Reasons for rejection include: ${candidate.weakPoints}. Your match score was ${candidate.matchScore}%.`;
+    const rejectionReason = `Dear ${candidate.name},\n\nThank you for your interest in the position. After careful consideration, we regret to inform you that you have not been shortlisted. Reasons for rejection include: ${candidate.weakPoints}. Your match score was ${candidate.matchScore}%.`;
 
     try {
       await sendRejectionEmail({
         to: candidate.candidateEmail,
         subject: 'Resume Application Update',
-        body: `Dear ${candidate.name},\n\n${rejectionReason}`,
+        body: rejectionReason,
       });
       console.log(`Rejection email sent to ${candidate.name} at ${candidate.candidateEmail}`);
+        toast({
+            title: "Success",
+            description: `Email sent to ${candidate.candidateEmail}`,
+        });
     } catch (error) {
       console.error(`Failed to send rejection email to ${candidate.name} at ${candidate.candidateEmail}:`, error);
+        toast({
+            title: "Error",
+            description: `Failed to send rejection email to ${candidate.candidateEmail}`,
+        });
     }
   };
 

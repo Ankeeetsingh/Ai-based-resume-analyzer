@@ -122,22 +122,9 @@ async input => {
   for (const result of results) {
       if (result.matchScore! < 50) {
           const rejectionReason = `Thank you for your interest in the position. After careful consideration, we regret to inform you that you have not been shortlisted. Reasons for rejection include: Your match score was below 50%.`;
-          if (result.candidateEmail) {
-            try {
-              await sendRejectionEmail({
-                to: result.candidateEmail,
-                subject: 'Resume Application Update',
-                body: rejectionReason,
-              });
-              console.log(`Rejection email sent to ${result.candidateEmail}`);
-            } catch (error) {
-              console.error(`Failed to send rejection email to ${result.candidateEmail}:`, error);
-            }
-          }
           result.rejectionReason = rejectionReason;
           result.salarySuggestion = undefined;
       } else {
-          //  result.rejectionReason = undefined;
           const salarySuggestion = await estimateSalary({
               jobDescription: input.jobDescription,
               expectedSalary: input.expectedSalary,
@@ -150,7 +137,7 @@ async input => {
           const monthlySalaryRange = salarySuggestion.replace("Based on your qualifications, a suggested salary is in the range of ", "");
           const monthlySalaryString = monthlySalaryRange;
 
-          result.salarySuggestion = `₹${monthlySalaryString} with the help of AI`;
+          result.salarySuggestion = `₹${monthlySalaryString}`;
       }
   }
   
@@ -163,25 +150,30 @@ async input => {
       result.resumeRank = index + 1;
       result.rejectionReason = undefined;
   });
+
+    // Define salary ranges based on rank
+    const salaryRanges = {
+      1: '90,000 – 1,10,000',
+      2: '80,000 – 90,000',
+      3: '70,000 – 80,000',
+      4: '60,000 – 70,000',
+      5: '50,000 – 60,000',
+    };
+  
+    // Assign salary suggestions based on rank
+    shortlistedCandidates.forEach(result => {
+      const rank = result.resumeRank as keyof typeof salaryRanges;
+      result.salarySuggestion = `₹${salaryRanges[rank]} per month`;
+    });
   
   // Send rejection emails to rejected candidates
   for (const result of rejectedCandidates) {
           const rejectionReason = `Thank you for your interest in the position. After careful consideration, we regret to inform you that you have not been shortlisted. Reasons for rejection include: ${result.weakPoints}. Your match score was ${result.matchScore}%.`;
           if (result.candidateEmail) {
-            try {
-              await sendRejectionEmail({
-                to: result.candidateEmail,
-                subject: 'Resume Application Update',
-                body: rejectionReason,
-              });
-              console.log(`Rejection email sent to ${result.candidateEmail}`);
-            } catch (error) {
-              console.error(`Failed to send rejection email to ${result.candidateEmail}:`, error);
-            }
+            result.rejectionReason = rejectionReason;
+            result.resumeRank = undefined; // Clear rank for rejected candidates
+            result.salarySuggestion = undefined;
           }
-          result.rejectionReason = rejectionReason;
-          result.resumeRank = undefined; // Clear rank for rejected candidates
-          result.salarySuggestion = undefined;
   }
 
   return [...shortlistedCandidates, ...rejectedCandidates];

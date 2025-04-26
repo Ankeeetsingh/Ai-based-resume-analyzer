@@ -98,13 +98,7 @@ export default function Home() {
       }
 
       // Navigate to the results page with the analysis results
-      router.push({
-        pathname: '/results',
-        query: {
-          jobTitle: jobTitle,
-          analysisResults: JSON.stringify(analysisResults),
-        },
-      });
+      router.push(`/results?jobTitle=${jobTitle}&analysisResults=${JSON.stringify(analysisResults)}`);
 
       toast({
         title: "Success",

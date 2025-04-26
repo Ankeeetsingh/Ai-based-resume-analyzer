@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LucideIcon, CheckCircle, AlertTriangle, Briefcase, GraduationCap, BookOpen, Mail } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { sendRejectionEmail } from "@/services/email-service"; // Import sendRejectionEmail
 
 interface AnalysisResult {
   matchScore?: number;
@@ -86,6 +87,27 @@ export default function ResultsPage() {
   const shortlistedCandidates = analysisResults.filter(result => result.resumeRank !== undefined);
   const rejectedCandidates = analysisResults.filter(result => result.resumeRank === undefined);
 
+  const sendRejectionEmailToCandidate = async (candidate: AnalysisResult) => {
+    if (!candidate.candidateEmail || !candidate.name) {
+      console.error("Candidate email or name is missing.");
+      return;
+    }
+
+    const rejectionReason = `Thank you for your interest in the position. After careful consideration, we regret to inform you that you have not been shortlisted. Reasons for rejection include: ${candidate.weakPoints}. Your match score was ${candidate.matchScore}%.`;
+
+    try {
+      await sendRejectionEmail({
+        to: candidate.candidateEmail,
+        subject: 'Resume Application Update',
+        body: `Dear ${candidate.name},\n\n${rejectionReason}`,
+      });
+      console.log(`Rejection email sent to ${candidate.name} at ${candidate.candidateEmail}`);
+    } catch (error) {
+      console.error(`Failed to send rejection email to ${candidate.name} at ${candidate.candidateEmail}:`, error);
+    }
+  };
+
+
   if (isLoading) {
     return <div className="text-center text-white">Loading...</div>;
   }
@@ -140,8 +162,11 @@ export default function ResultsPage() {
                           <h4 className="mb-2 font-semibold">Rejected Candidates</h4>
                           <ul className="list-none pl-0">
                             {rejectedCandidates.map((result, index) => (
-                              <li key={`rejected-${index}`} className="mb-2">
-                                {result.name ?? `Candidate ${index + 1}`} - Match Score: {result.matchScore}%
+                              <li key={`rejected-${index}`} className="mb-2 flex items-center justify-between">
+                                <span>{result.name ?? `Candidate ${index + 1}`} - Match Score: {result.matchScore}%</span>
+                                <Button size="sm" onClick={() => sendRejectionEmailToCandidate(result)}>
+                                  Send Email
+                                </Button>
                               </li>
                             ))}
                           </ul>

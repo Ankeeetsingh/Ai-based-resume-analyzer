@@ -25,27 +25,32 @@ export async function estimateSalary(params: EstimateSalaryParams): Promise<stri
   console.log('Estimating salary:', params);
 
   // Extract numeric value from expected salary string
-  const salaryString = params.expectedSalary;
+  let monthlySalaryLower = 50000; // default values
+  let monthlySalaryUpper = 60000;
 
-    // Split the string by spaces and look for "lakh"
-    const parts = salaryString.split(" ");
-    let annualSalaryLakh;
-    for (let i = 0; i < parts.length; i++) {
-        if (parts[i].toLowerCase() === "lakh") {
-            // Parse the numeric value before "lakh"
-            annualSalaryLakh = parseFloat(parts[i - 1]);
-            break;
-        }
-    }
+  try {
+      const salaryString = params.expectedSalary;
 
-    let monthlySalaryLower, monthlySalaryUpper;
+      // Split the string by spaces and look for "lakh"
+      const parts = salaryString.split(" ");
+      let annualSalaryLakh;
+      for (let i = 0; i < parts.length; i++) {
+          if (parts[i].toLowerCase() === "lakh") {
+              // Parse the numeric value before "lakh"
+              annualSalaryLakh = parseFloat(parts[i - 1]);
+              break;
+          }
+      }
 
-    if (annualSalaryLakh) {
-        // Convert annual salary (in lakhs) to monthly salary
-        const annualSalary = annualSalaryLakh * 100000; // Convert lakhs to rupees
-        monthlySalaryLower = (annualSalary / 12) * 0.9; // Lower bound (10% less)
-        monthlySalaryUpper = (annualSalary / 12) * 1.1; // Upper bound (10% more)
-    }
+      if (annualSalaryLakh) {
+          // Convert annual salary (in lakhs) to monthly salary
+          const annualSalary = annualSalaryLakh * 100000; // Convert lakhs to rupees
+          monthlySalaryLower = (annualSalary / 12) * 0.9; // Lower bound (10% less)
+          monthlySalaryUpper = (annualSalary / 12) * 1.1; // Upper bound (10% more)
+      }
+  } catch (e) {
+      console.error('Error estimating salary', e);
+  }
 
   return Promise.resolve(`${Math.round(monthlySalaryLower / 1000)},000 to ${Math.round(monthlySalaryUpper / 1000)},000 per month`);
 }

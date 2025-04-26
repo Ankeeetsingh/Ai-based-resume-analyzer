@@ -82,6 +82,10 @@ export default function ResultsPage() {
     setSelectedResumeIndex(null);
   };
 
+  // Separate shortlisted and rejected candidates
+  const shortlistedCandidates = analysisResults.filter(result => result.resumeRank !== undefined);
+  const rejectedCandidates = analysisResults.filter(result => result.resumeRank === undefined);
+
   if (isLoading) {
     return <div className="text-center text-white">Loading...</div>;
   }
@@ -112,7 +116,7 @@ export default function ResultsPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {analysisResults.map((result, index) => (
+                          {shortlistedCandidates.map((result, index) => (
                             <TableRow
                               key={index}
                               className={cn(
@@ -130,6 +134,19 @@ export default function ResultsPage() {
                         </TableBody>
                       </Table>
                     </ScrollArea>
+                     {/* Rejected Candidates Section */}
+                      {rejectedCandidates.length > 0 && (
+                        <div className="mt-4">
+                          <h4 className="mb-2 font-semibold">Rejected Candidates</h4>
+                          <ul className="list-none pl-0">
+                            {rejectedCandidates.map((result, index) => (
+                              <li key={`rejected-${index}`} className="mb-2">
+                                {result.name ?? `Candidate ${index + 1}`} - Match Score: {result.matchScore}%
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                   </CardContent>
                 </Card>
 

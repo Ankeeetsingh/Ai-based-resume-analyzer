@@ -31,7 +31,7 @@ export type AnalyzeResumeInput = z.infer<typeof AnalyzeResumeInputSchema>;
 const AnalyzeResumeOutputSchema = z.array(z.object({
   name: z.string().optional().describe('The name of the candidate.'),
   matchScore: z.number().describe('The match score (0-100%) of the resume against the job description.'),
-  resumeRank: z.number().describe('The rank of the resume among the analyzed resumes.'),
+  resumeRank: z.number().optional().describe('The rank of the resume among the analyzed resumes.'),
   topSkills: z.array(z.string()).describe('A list of the candidate\'s top skills.'),
   highlights: z.string().describe('A summary of the candidate\'s strengths.'),
   weakPoints: z.string().describe('A list of weaknesses or concerns.'),
@@ -66,7 +66,6 @@ const analyzeResumePrompt = ai.definePrompt({
       matchScore: z
         .number()
         .describe('The match score (0-100%) of the resume against the job description.'),
-      resumeRank: z.number().describe('The rank of the resume among the analyzed resumes.'),
       topSkills: z.array(z.string()).describe('A list of the candidate\'s top skills.'),
       highlights: z.string().describe('A summary of the candidate\'s strengths.'),
       weakPoints: z.string().describe('A list of weaknesses or concerns.'),
@@ -86,7 +85,6 @@ Provide the following:
 
 - Name: Extract the candidate's name from the resume.
 - Match Score (0-100%): How well does the resume match the job description?
-- Resume Rank: Rank the resume among other resumes (this will be done later, so provide a relative rank based on your analysis).
 - Top Skills: A list of the candidate's top skills.
 - Highlights: A summary of the candidate's strengths.
 - Weak Points: A list of weaknesses or concerns.
@@ -119,13 +117,10 @@ async input => {
 
   // Simple ranking based on match score (can be improved with more sophisticated logic)
   results.sort((a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0));
-  results.forEach((result, index) => {
-    result.resumeRank = index + 1;
-  });
 
-  // Shortlist and send rejection emails
+  // Generate rejection reasons and salary suggestions *before* shortlisting
   for (const result of results) {
-    if (result.matchScore! < 50) {
+      if (result.matchScore! < 50) {
           const rejectionReason = `Thank you for your interest in the position. After careful consideration, we regret to inform you that you have not been shortlisted. Reasons for rejection include: Your match score was below 50%.`;
           if (result.candidateEmail) {
             try {
@@ -141,41 +136,53 @@ async input => {
           }
           result.rejectionReason = rejectionReason;
           result.salarySuggestion = undefined;
-          result.candidateEmail = undefined;
-        }
-    else if (result.resumeRank! > input.numCandidatesToShortlist) {
-      const rejectionReason = `Thank you for your interest in the position. After careful consideration, we regret to inform you that you have not been shortlisted. Reasons for rejection include: ${result.weakPoints}. Your match score was ${result.matchScore}%.`;
-      if (result.candidateEmail) {
-        try {
-          await sendRejectionEmail({
-            to: result.candidateEmail,
-            subject: 'Resume Application Update',
-            body: rejectionReason,
+      } else {
+          //  result.rejectionReason = undefined;
+          const salarySuggestion = await estimateSalary({
+              jobDescription: input.jobDescription,
+              expectedSalary: input.expectedSalary,
+              resumeText: input.resumes[results.indexOf(result)],
+              topSkills: result.topSkills.join(', '),
+              highlights: result.highlights
           });
-          console.log(`Rejection email sent to ${result.candidateEmail}`);
-        } catch (error) {
-          console.error(`Failed to send rejection email to ${result.candidateEmail}:`, error);
-        }
+
+          // Convert annual expected salary to monthly range
+          const monthlySalaryRange = salarySuggestion.replace("Based on your qualifications, a suggested salary is in the range of ", "");
+          const monthlySalaryString = monthlySalaryRange;
+
+          result.salarySuggestion = `₹${monthlySalaryString} with the help of AI`;
       }
-      result.rejectionReason = rejectionReason;
-    } else {
-      const salarySuggestion = await estimateSalary({
-        jobDescription: input.jobDescription,
-        expectedSalary: input.expectedSalary,
-        resumeText: input.resumes[result.resumeRank! - 1], // Pass the raw resume content for better estimation
-        topSkills: result.topSkills.join(', '),
-        highlights: result.highlights
-      });
-      
-       // Convert annual expected salary to monthly range
-        const monthlySalaryRange = salarySuggestion.replace("Based on your qualifications, a suggested salary is in the range of ", "");
-        const monthlySalaryString = monthlySalaryRange;
-        
-        result.salarySuggestion = `₹${monthlySalaryString} with the help of AI`;
+  }
+  
+  // Shortlist the candidates based on numCandidatesToShortlist
+  const shortlistedCandidates = results.slice(0, input.numCandidatesToShortlist);
+  const rejectedCandidates = results.slice(input.numCandidatesToShortlist);
+  
+   // Assign ranks to shortlisted candidates
+  shortlistedCandidates.forEach((result, index) => {
+      result.resumeRank = index + 1;
       result.rejectionReason = undefined;
-      result.candidateEmail = undefined;
-    }
+  });
+  
+  // Send rejection emails to rejected candidates
+  for (const result of rejectedCandidates) {
+          const rejectionReason = `Thank you for your interest in the position. After careful consideration, we regret to inform you that you have not been shortlisted. Reasons for rejection include: ${result.weakPoints}. Your match score was ${result.matchScore}%.`;
+          if (result.candidateEmail) {
+            try {
+              await sendRejectionEmail({
+                to: result.candidateEmail,
+                subject: 'Resume Application Update',
+                body: rejectionReason,
+              });
+              console.log(`Rejection email sent to ${result.candidateEmail}`);
+            } catch (error) {
+              console.error(`Failed to send rejection email to ${result.candidateEmail}:`, error);
+            }
+          }
+          result.rejectionReason = rejectionReason;
+          result.resumeRank = undefined; // Clear rank for rejected candidates
+          result.salarySuggestion = undefined;
   }
 
-  return results;
+  return [...shortlistedCandidates, ...rejectedCandidates];
 });

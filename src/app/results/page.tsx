@@ -31,6 +31,7 @@ interface AnalysisResult {
   rejectionReason?: string;
   salarySuggestion?: string;
   name?: string; // Assuming name is part of your result
+  candidateEmail?: string;
 }
 
 interface ResultsProps {
@@ -120,7 +121,9 @@ export default function ResultsPage() {
                               )}
                               onClick={() => handleResumeSelect(index)}
                             >
-                              <TableCell className="font-medium">{result.resumeRank ?? (index + 1)}</TableCell>
+                              <TableCell className="font-medium">
+                                {`Rank ${result.resumeRank ?? (index + 1)} - ${result.name ?? 'Candidate ' + (index + 1)}`}
+                              </TableCell>
                               <TableCell>{result.matchScore ? `${result.matchScore}%` : 'N/A'}</TableCell>
                             </TableRow>
                           ))}
@@ -152,7 +155,7 @@ export default function ResultsPage() {
                           </Avatar>
                           <div>
                             <h3 className="text-lg font-semibold">
-                              Candidate {selectedResumeIndex + 1}
+                              {analysisResults[selectedResumeIndex].name ?? `Candidate ${selectedResumeIndex + 1}`}
                             </h3>
                             <p className="text-sm text-muted-foreground">
                               Rank: {analysisResults[selectedResumeIndex].resumeRank ?? (selectedResumeIndex + 1)}, Match Score: {analysisResults[selectedResumeIndex].matchScore}%
@@ -262,5 +265,3 @@ function BookOpenIcon(props: any): JSX.Element {
     <BookOpen {...props} />
   );
 }
-
-

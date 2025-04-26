@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { jobTitle, jobDescription, expectedSalary, analysisMode, resumeDataUris } = await request.json();
+    const { jobTitle, jobDescription, expectedSalary, analysisMode, resumeDataUris, numCandidatesToShortlist } = await request.json();
 
     let analysisResults;
 
@@ -12,6 +12,7 @@ export async function POST(request: Request) {
         jobDescription: jobDescription,
         expectedSalary: expectedSalary,
         resumes: resumeDataUris,
+        numCandidatesToShortlist: parseInt(numCandidatesToShortlist, 10) || 1, // Ensure it's a number
       });
     } else {
       analysisResults = []; // Handle standard mode if needed

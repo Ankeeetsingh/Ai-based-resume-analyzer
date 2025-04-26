@@ -52,6 +52,7 @@ const AnalysisForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const [numCandidatesToShortlist, setNumCandidatesToShortlist] = useState("1");
 
   const handleJobTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setJobTitle(e.target.value);
@@ -70,6 +71,10 @@ const AnalysisForm = () => {
     if (e.target.files) {
       setResumes(Array.from(e.target.files));
     }
+  };
+
+  const handleNumCandidatesToShortlistChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNumCandidatesToShortlist(e.target.value);
   };
 
   const analyzeResumes = async () => {
@@ -128,6 +133,7 @@ const AnalysisForm = () => {
           jobDescription: jobDescription,
           expectedSalary: expectedSalary,
           resumes: resumeDataUris,
+          numCandidatesToShortlist: parseInt(numCandidatesToShortlist, 10) || 1,
         });
       } else {
         analysisResults = []; // Handle standard mode if needed
@@ -193,6 +199,17 @@ const AnalysisForm = () => {
           <Label htmlFor="resume-upload">Upload Resumes</Label>
           <Input type="file" id="resume-upload" multiple onChange={handleResumeUpload} />
         </div>
+        <div>
+          <Label htmlFor="num-candidates">Number of Candidates to Shortlist</Label>
+          <Input
+            type="number"
+            id="num-candidates"
+            placeholder="Enter number of candidates to shortlist"
+            value={numCandidatesToShortlist}
+            onChange={handleNumCandidatesToShortlistChange}
+            min="1"
+          />
+        </div>
          <div>
           <Label className="flex items-center space-x-2">
             <span>AI Mode</span>
@@ -239,4 +256,3 @@ export default function Home() {
     </div>
   );
 }
-

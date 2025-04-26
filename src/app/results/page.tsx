@@ -18,6 +18,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LucideIcon, CheckCircle, AlertTriangle, Briefcase, GraduationCap, BookOpen } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // Placeholder Icons (replace with actual resume icons later)
 const BriefcaseIcon: LucideIcon = Briefcase;
@@ -42,9 +43,9 @@ export default function ResultsPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen p-6">
+    <div className="flex flex-col min-h-screen p-6 bg-gray-900 text-white">
       <div className="container mx-auto max-w-5xl">
-        <Card className="mb-8 fade-in">
+        <Card className="mb-8 fade-in bg-secondary">
           <CardHeader>
             <CardTitle className="text-2xl font-semibold">Resume Analysis Results</CardTitle>
             <p className="text-muted-foreground">Job Title: {jobTitle}</p>
@@ -53,7 +54,7 @@ export default function ResultsPage() {
             {analysisResults.length > 0 ? (
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Resume Ranking Section */}
-                <Card className="w-full md:w-1/3 fade-in">
+                <Card className="w-full md:w-1/3 fade-in bg-background">
                   <CardHeader>
                     <CardTitle>Resume Ranking</CardTitle>
                   </CardHeader>
@@ -87,7 +88,7 @@ export default function ResultsPage() {
                 </Card>
 
                 {/* Resume Details Section */}
-                <Card className="w-full md:w-2/3 fade-in">
+                <Card className="w-full md:w-2/3 fade-in bg-background">
                   <CardHeader className="flex items-center justify-between">
                     <CardTitle>
                       Resume Details
@@ -158,32 +159,21 @@ export default function ResultsPage() {
                           <p>{analysisResults[selectedResumeIndex].education ?? "N/A"}</p>
                         </div>
 
-                        {/* Interview Questions Section */}
-                        <div>
-                          <h4 className="mb-2 font-semibold flex items-center space-x-1"><BookOpenIcon className="h-4 w-4 text-purple-500" /><span>Interview Questions</span></h4>
-                          <ul className="list-decimal pl-5">
-                            {analysisResults[selectedResumeIndex].interviewQuestions ? (
-                              analysisResults[selectedResumeIndex].interviewQuestions.map((question, index) => (
-                                <li key={index}>{question}</li>
-                              ))
-                            ) : (
-                              <li>N/A</li>
-                            )}
-                          </ul>
-                        </div>
-
-                        {/* Model Answers Section */}
-                        <div>
-                          <h4 className="mb-2 font-semibold flex items-center space-x-1"><BookOpenIcon className="h-4 w-4 text-purple-500" /><span>Model Answers</span></h4>
-                          <ul className="list-decimal pl-5">
-                            {analysisResults[selectedResumeIndex].modelAnswers ? (
-                              analysisResults[selectedResumeIndex].modelAnswers.map((answer, index) => (
-                                <li key={index}>{answer}</li>
-                              ))
-                            ) : (
-                              <li>N/A</li>
-                            )}
-                          </ul>
+                         {/* Interview Questions Section */}
+                         <div>
+                          <h4 className="mb-2 font-semibold flex items-center space-x-1"><BookOpenIcon className="h-4 w-4 text-purple-500" /><span>Interview Questions and Model Answers</span></h4>
+                            <Accordion type="single" collapsible>
+                              {(analysisResults[selectedResumeIndex].interviewQuestions ?? []).map((question, index) => (
+                                <AccordionItem key={index} value={`question-${index}`}>
+                                  <AccordionTrigger>{question}</AccordionTrigger>
+                                  <AccordionContent>
+                                    {analysisResults[selectedResumeIndex].modelAnswers && analysisResults[selectedResumeIndex].modelAnswers[index]
+                                      ? analysisResults[selectedResumeIndex].modelAnswers[index]
+                                      : "No model answer provided."}
+                                  </AccordionContent>
+                                </AccordionItem>
+                              ))}
+                            </Accordion>
                         </div>
                       </div>
                     ) : (

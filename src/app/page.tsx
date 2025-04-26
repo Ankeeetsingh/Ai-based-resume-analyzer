@@ -13,15 +13,47 @@ import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { Sparkles, Users, Bolt } from "lucide-react";
+import { Moon, Sun } from 'lucide-react';
 
-export default function Home() {
+const HeroSection = () => (
+  <div className="text-center mb-12 py-24 text-white">
+    <div className="flex justify-center mb-8">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-brain">
+        <path d="M3 7V5c0-1.38.83-2.42 2-3h14a2 2 0 0 1 2 2v2"></path>
+        <path d="M5 7a2 2 0 0 0-2 2v4c0 1.1.9 2 2 2h4"></path>
+        <path d="M19 7a2 2 0 0 1 2 2v4c0 1.1-.9 2-2 2h-4"></path>
+        <path d="M7 15v2a2 2 0 0 1-2 2"></path>
+        <path d="M17 15v2a2 2 0 0 0 2 2"></path>
+        <path d="M11 7v8h2"></path>
+      </svg>
+    </div>
+    <h1 className="text-5xl font-bold mb-4">AI Resume Analyzer</h1>
+    <p className="text-lg text-gray-400">
+      Upload a job description and resumes to automatically rank candidates and generate tailored interview questions using advanced AI analysis.
+    </p>
+    <div className="flex justify-center mt-8 space-x-4">
+      <Badge icon={Sparkles} text="AI-Powered Analysis" />
+      <Badge icon={Users} text="Candidate Ranking" />
+      <Badge icon={Bolt} text="Custom Interview Questions" />
+    </div>
+  </div>
+);
+
+const Badge = ({ icon: Icon, text }: { icon: LucideIcon, text: string }) => (
+  <div className="flex items-center bg-secondary text-secondary-foreground rounded-full px-4 py-2 text-sm">
+    <Icon className="mr-2 h-4 w-4" />
+    {text}
+  </div>
+);
+
+const AnalysisForm = () => {
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [resumes, setResumes] = useState<File[]>([]);
   const [analysisMode, setAnalysisMode] = useState<"standard" | "analyzing">("standard");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const [isDarkTheme, setIsDarkTheme] = useState(false);
   const router = useRouter();
 
   const handleJobTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,73 +147,74 @@ export default function Home() {
   };
 
   return (
-    <div className={`flex flex-col min-h-screen p-6 ${isDarkTheme ? 'dark' : ''}`}>
-      <div className="container mx-auto max-w-3xl">
-        {/* Landing Page Content */}
-        <div className="text-center mb-12 fade-in">
-          <h1 className="text-4xl font-bold mb-4">ResumeRank AI</h1>
-          <p className="text-lg text-muted-foreground">
-            Intelligent resume analysis and interview question generation.
-          </p>
+    <Card className="mb-8 fade-in bg-secondary">
+      <CardHeader>
+        <CardTitle className="text-lg">Analyze Resumes</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <div>
+          <Label htmlFor="job-title">Job Title</Label>
+          <Input
+            type="text"
+            id="job-title"
+            placeholder="Enter job title"
+            value={jobTitle}
+            onChange={handleJobTitleChange}
+          />
         </div>
+        <div>
+          <Label htmlFor="job-description">Job Description</Label>
+          <Textarea
+            id="job-description"
+            placeholder="Enter job description"
+            value={jobDescription}
+            onChange={handleJobDescriptionChange}
+          />
+        </div>
+        <div>
+          <Label htmlFor="resume-upload">Upload Resumes</Label>
+          <Input type="file" id="resume-upload" multiple onChange={handleResumeUpload} />
+        </div>
+        <div>
+          <Label>Analysis Mode</Label>
+          <Select value={analysisMode} onValueChange={(value) => setAnalysisMode(value as "standard" | "analyzing")}>
+            <SelectTrigger className="bg-background">
+              <SelectValue placeholder="Select analysis mode" />
+            </SelectTrigger>
+            <SelectContent className="bg-background">
+              <SelectItem value="standard">Standard Mode</SelectItem>
+              <SelectItem value="analyzing">Analyzing Mode (ChatGPT Powered)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={analyzeResumes} disabled={isLoading}>
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <div className="loading-spinner"></div>
+              Analyzing...
+            </div>
+          ) : (
+            "Analyze Resumes"
+          )}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
 
-        <Card className="mb-8 fade-in">
-          <CardHeader>
-            <CardTitle>Analyze Resumes</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="flex items-center space-x-2">
-              <Switch id="dark-theme" onCheckedChange={(checked) => setIsDarkTheme(checked)} />
-              <Label htmlFor="dark-theme">Dark Mode</Label>
-            </div>
-            <div>
-              <Label htmlFor="job-title">Job Title</Label>
-              <Input
-                type="text"
-                id="job-title"
-                placeholder="Enter job title"
-                value={jobTitle}
-                onChange={handleJobTitleChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="job-description">Job Description</Label>
-              <Textarea
-                id="job-description"
-                placeholder="Enter job description"
-                value={jobDescription}
-                onChange={handleJobDescriptionChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="resume-upload">Upload Resumes</Label>
-              <Input type="file" id="resume-upload" multiple onChange={handleResumeUpload} />
-            </div>
-            <div>
-              <Label>Analysis Mode</Label>
-              <Select value={analysisMode} onValueChange={(value) => setAnalysisMode(value as "standard" | "analyzing")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select analysis mode" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standard">Standard Mode</SelectItem>
-                  <SelectItem value="analyzing">Analyzing Mode (ChatGPT Powered)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={analyzeResumes} disabled={isLoading}>
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="loading-spinner"></div>
-                  Analyzing...
-                </div>
-              ) : (
-                "Analyze Resumes"
-              )}
-            </Button>
-          </CardContent>
-        </Card>
+export default function Home() {
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
+
+  return (
+    <div className={`flex flex-col min-h-screen ${isDarkTheme ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
+      <div className="container mx-auto max-w-3xl">
+        <button className="absolute top-4 right-4 rounded-full p-2 bg-secondary text-secondary-foreground hover:bg-accent" onClick={() => setIsDarkTheme(!isDarkTheme)}>
+          {isDarkTheme ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </button>
+        <HeroSection />
+        <AnalysisForm />
       </div>
     </div>
   );
 }
+

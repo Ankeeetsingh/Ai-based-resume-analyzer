@@ -41,6 +41,10 @@ const AnalyzeResumeOutputSchema = z.array(z.object({
   salarySuggestion: z.string().optional().describe('Suggested salary for the candidate, based on their qualifications and experience.'),
   rejectionReason: z.string().optional().describe('Reason for rejecting the resume, if applicable.'),
   candidateEmail: z.string().optional().describe('The email of the candidate. Only present if resume is rejected.'),
+  projects: z.array(z.object({
+    name: z.string().describe('The name of the project.'),
+    description: z.string().describe('A brief description of the project.'),
+  })).optional().describe('A list of the candidate\'s projects.'),
 }));
 export type AnalyzeResumeOutput = z.infer<typeof AnalyzeResumeOutputSchema>;
 
@@ -73,6 +77,10 @@ const analyzeResumePrompt = ai.definePrompt({
       interviewQuestions: z.array(z.string()).describe('Tailored interview questions for the candidate.'),
       modelAnswers: z.array(z.string()).describe('Model answers for the interview questions.'),
       candidateEmail: z.string().optional().describe('The email address of the candidate, extracted from the resume.'),
+      projects: z.array(z.object({
+        name: z.string().describe('The name of the project.'),
+        description: z.string().describe('A brief description of the project.'),
+      })).optional().describe('A list of the candidate\'s projects.'),
     }),
   },
   prompt: `You are an AI resume analyzer. Analyze the resume provided and compare it to the job description. Extract the candidate's name and email address from the resume.
@@ -91,7 +99,8 @@ Provide the following:
 - Suggestions: Suggestions to improve the resume.
 - Interview Questions: Tailored interview questions for the candidate.
 - Model Answers: Model answers for the interview questions.
--Candidate Email: Extract from the resume and add it to the ouput.
+- Candidate Email: Extract from the resume and add it to the ouput.
+- Projects: Extract any projects the candidate has worked on. For each project, include the project name and a brief description. If no projects are mentioned, return an empty list.
 `,
 });
 

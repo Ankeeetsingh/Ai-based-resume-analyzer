@@ -34,29 +34,12 @@ interface AnalysisResult {
   salarySuggestion?: string;
   name?: string; // Assuming name is part of your result
   candidateEmail?: string;
+  projects?: { name: string; description: string }[];
 }
 
 interface ResultsProps {
   searchParams: { [key: string]: string | string[] | undefined };
 }
-
-// Dummy project data
-const dummyProjects = [
-  {
-    name: "AI Recruitment Assistant",
-    description:
-      "An intelligent tool to automate resume shortlisting and interview question generation using NLP, ML, and ChatGPT.",
-    interviewQuestion: "How did you handle the integration of the AI model with the front-end application?",
-    sampleAnswer: "I integrated the AI model with the Next.js frontend by creating API routes that communicated with the backend model asynchronously, ensuring a smooth user experience without page reloads.",
-  },
-  {
-    name: "Plant Disease Diagnosis",
-    description:
-      "Developed a system for diagnosing plant health using image recognition and machine learning.",
-    interviewQuestion: "What were the key challenges you faced while building the diagnostic model?",
-    sampleAnswer: "The biggest challenge was the limited availability of labeled data. To overcome this, I used transfer learning techniques and data augmentation to improve the model's accuracy.",
-  },
-];
 
 export default function ResultsPage() {
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([]);
@@ -284,22 +267,23 @@ export default function ResultsPage() {
                           </div>
                         </div>
 
-                        {/* Project Section */}
-                        <div>
-                          <h4 className="mb-2 font-semibold flex items-center space-x-1"><BriefcaseIcon className="h-4 w-4 text-orange-500" /><span>Projects</span></h4>
-                          {dummyProjects.map((project, index) => (
-                            <div key={index} className="mb-4">
-                              <h5 className="font-semibold">{project.name}</h5>
-                              <p className="text-sm text-muted-foreground">{project.description}</p>
-                              <p className="mt-2">
-                                <span className="font-semibold">Interview Question:</span> {project.interviewQuestion}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                <span className="font-semibold">Sample Answer:</span> {project.sampleAnswer}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
+                          {/* Project Section */}
+                          <div>
+                            <h4 className="mb-2 font-semibold flex items-center space-x-1">
+                              <BriefcaseIcon className="h-4 w-4 text-orange-500" />
+                              <span>Projects</span>
+                            </h4>
+                            {analysisResults[selectedResumeIndex].projects && analysisResults[selectedResumeIndex].projects.length > 0 ? (
+                              analysisResults[selectedResumeIndex].projects.map((project, index) => (
+                                <div key={index} className="mb-4">
+                                  <h5 className="font-semibold">{project.name}</h5>
+                                  <p className="text-sm text-muted-foreground">{project.description}</p>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-sm text-muted-foreground">No projects mentioned.</p>
+                            )}
+                          </div>
 
 
                          {/* Interview Questions Section */}

@@ -1,10 +1,12 @@
 'use server';
 
 /**
- * @fileOverview Defines the email sending service.
+ * @fileOverview Defines the email sending service using Nodemailer and Gmail.
  *
  * - sendRejectionEmail - A function that sends a rejection email to a candidate.
  */
+
+import nodemailer from 'nodemailer';
 
 export interface SendEmailParams {
   to: string;
@@ -13,13 +15,53 @@ export interface SendEmailParams {
 }
 
 /**
- * Sends a rejection email to a candidate.
+ * Sends a rejection email to a candidate using Gmail.
+ * Reads credentials from environment variables.
  * @param params - The email parameters (to, subject, body).
  */
 export async function sendRejectionEmail(params: SendEmailParams): Promise<void> {
-  // TODO: Implement email sending functionality using a service like SendGrid, Mailgun, or Nodemailer.
-  // This is a placeholder implementation that logs the email details to the console.
-  console.log('Sending rejection email:', params);
-  // In a real-world application, you would use a dedicated email sending service here.
-  return Promise.resolve();
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+
+  if (!emailUser || !emailPass) {
+    const errorMessage = 'Missing environment variables for email sending. Ensure EMAIL_USER and EMAIL_PASS are set.';
+    console.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  // Configure the Nodemailer transporter using Gmail
+  // IMPORTANT: For Gmail, it's highly recommended to use an App Password if 2-Step Verification is enabled.
+  // See: https://support.google.com/accounts/answer/185833
+  const transporter = nodemailer.createTransport({
+    service: 'gmail', // Use Gmail service
+    auth: {
+      user: emailUser, // Your Gmail address from .env
+      pass: emailPass, // Your Gmail password or App Password from .env
+    },
+  });
+
+  const mailOptions = {
+    from: `"AI Resume Analyzer" <${emailUser}>`, // Sender address (shows your name and email)
+    to: params.to, // Recipient address
+    subject: params.subject, // Subject line
+    text: params.body, // Plain text body
+    // html: `<p>${params.body.replace(/\n/g, '<br>')}</p>`, // Optional: HTML body
+  };
+
+  try {
+    // Send the email
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully: %s', info.messageId);
+    console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info)); // Useful for testing with ethereal.email
+  } catch (error: any) {
+    console.error('Error sending email:', error);
+    // Provide a more specific error message if possible
+    let detailedError = error.message;
+    if (error.responseCode === 535) {
+      detailedError = 'Authentication failed. Check EMAIL_USER and EMAIL_PASS. If using Gmail with 2FA, ensure you are using an App Password.';
+    } else if (error.code === 'ECONNECTION') {
+        detailedError = 'Connection error. Check network connectivity or firewall settings.';
+    }
+    throw new Error(`Failed to send email: ${detailedError}`);
+  }
 }

@@ -21,7 +21,7 @@ export interface SendEmailParams {
  */
 export async function sendRejectionEmail(params: SendEmailParams): Promise<void> {
   const emailUser = process.env.EMAIL_USER;
-  const emailPass = process.env.EMAIL_PASS;
+  const emailPass = process.env.EMAIL_PASS; // Should be the App Password
 
   if (!emailUser || !emailPass) {
     const errorMessage = 'Missing environment variables for email sending. Ensure EMAIL_USER and EMAIL_PASS are set.';
@@ -30,18 +30,17 @@ export async function sendRejectionEmail(params: SendEmailParams): Promise<void>
   }
 
   // Configure the Nodemailer transporter using Gmail
-  // IMPORTANT: For Gmail, it's highly recommended to use an App Password if 2-Step Verification is enabled.
-  // See: https://support.google.com/accounts/answer/185833
+  // IMPORTANT: For Gmail, use an App Password if 2-Step Verification is enabled.
   const transporter = nodemailer.createTransport({
     service: 'gmail', // Use Gmail service
     auth: {
       user: emailUser, // Your Gmail address from .env
-      pass: emailPass, // Your Gmail password or App Password from .env
+      pass: emailPass, // Your Gmail App Password from .env
     },
   });
 
   const mailOptions = {
-    from: `"AI Resume Analyzer" <${emailUser}>`, // Sender address (shows your name and email)
+    from: `"AI Resume Analyzer" <${emailUser}>`, // Sender address
     to: params.to, // Recipient address
     subject: params.subject, // Subject line
     text: params.body, // Plain text body

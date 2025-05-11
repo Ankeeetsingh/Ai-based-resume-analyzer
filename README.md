@@ -43,7 +43,7 @@ management (lucide-react, clsx, date-fns, react-hook-form).
 This project is provided for **demonstration purposes only**.  
 **Do not reuse, modify, or distribute this code** without explicit written permission.
 
-© 2025 [Your Name]
+© 2025 Ankeeet
 
 
 ## License Notice

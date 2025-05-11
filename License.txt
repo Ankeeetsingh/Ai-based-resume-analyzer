@@ -1,0 +1,5 @@
+Copyright (c) 2025 [Ankeeet]
+
+This repository is made available for demonstration purposes only.
+No permission is granted to copy, modify, distribute, or use any part of the code
+for commercial or personal projects without explicit written permission.
